@@ -1,104 +1,101 @@
 ﻿using System;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 
-namespace SamplePlugin
+namespace PhysicsFix
 {
     public sealed class Plugin : IDalamudPlugin
     {
-        public string Name => "Physics Fix";
-
+        private readonly IFramework framework;
         private DalamudPluginInterface PluginInterface { get; init; }
-        
-        [PluginService] internal static IGameInteropProvider Hooking { get; private set; } = null!;
-        
-        // g_Client::System::Framework::Framework_InstancePointer2
+
+        [PluginService]
+        internal static IGameInteropProvider Hooking { get; private set; } = null!;
+
+        // g_Client::System::Framework::Framework::InstancePointer2
+        // Used as the dummy call when we don't update the bone for a frame
         [Signature("48 8B 05 ?? ?? ?? ?? F3 0F 10 B0 ?? ?? ?? ?? F3 41 0F 5D F2")]
-        private readonly IntPtr _frameworkPointer = IntPtr.Zero;
+        private readonly IntPtr frameworkPointer = IntPtr.Zero;
 
-        // Client::Graphics::Physics::BoneSimulator_Update
-        [Signature("48 8B C4 48 89 48 08 55 48 81 EC", DetourName = nameof(PhysicsSkip))]
-        private readonly Hook<PhysicsSkipDelegate>? _physicsSkipHook = null!;
-        
-        private delegate IntPtr PhysicsSkipDelegate(IntPtr a1, IntPtr a2);
-        
-        [PluginService] public static IPluginLog Logger { get; private set; }
-        
-        [PluginService] public static IChatGui Chat { get; private set; }
+        /// The detour function signature
+        private delegate IntPtr BoneSimulatorUpdate(IntPtr a1, IntPtr a2);
 
-        private bool _executePhysics = false;
-        
-        // Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
-        private IntPtr PhysicsSkip(IntPtr a1, IntPtr a2)
-        {
-            if (_executePhysics)
-            {
-                return _physicsSkipHook!.Original(a1, a2);
-            }
+        // Client::Graphics::Physics::BoneSimulator::Update
+        // This is called for each BoneSimulator, such as hair, ears, etc
+        [Signature("48 8B C4 48 89 48 08 55 48 81 EC", DetourName = nameof(BoneUpdate))]
+        private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
-            return _frameworkPointer;
-        }
+        /// If the physics simulation should be ran 
+        public bool ExecutePhysics;
 
-        private IFramework _framework;
+        /// If the physics were ran for this slice
+        public bool RanPhysics;
 
-        private int _counter = 0;
-        
+        /// The target FPS the physics should be run at
+        private const double TargetFps = 48.0;
+
+        /// The number of ticks for the length of the target FPS
+        private static long SliceLength => (long)(1 / TargetFps * TimeSpan.TicksPerSecond);
+
+        /// Timekeeping state
+        private long startTick;
+
+        public long EndTick => startTick + SliceLength;
+
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] ICommandManager commandManager,
             [RequiredVersion("1.0")] IFramework framework)
         {
-            _framework = framework;
+            this.framework = framework;
             this.PluginInterface = pluginInterface;
             Hooking.InitializeFromAttributes(this);
 
-            _physicsSkipHook?.Enable();
-            
-            Logger.Info("Plugin skip hook!");
-            
-            var stringBuilder = new SeStringBuilder();
-            stringBuilder.AddUiForeground(45);
-            stringBuilder.AddText($"[HighFPSPhysics] ");
-            stringBuilder.AddUiForegroundOff();
-            stringBuilder.AddText("Plugin skip hook installed! " + (_physicsSkipHook == null));
+            startTick = DateTime.Now.Ticks;
 
-            Chat.Print(stringBuilder.BuiltString);
-
-            framework.Update += Framework_Update;
+            boneSimulatorUpdateHook?.Enable();
+            framework.Update += Update;
         }
 
         // Called every frame.
-        public void Framework_Update(IFramework framework)
+        public void Update(IFramework _)
         {
-            // Our current FPS. UpdateDelta is the last time Framework_Update was called in milliseconds (usually.)
-            var fps = 1000.0 / framework.UpdateDelta.Milliseconds;
-            
-            // We want to fix the physics to 30 FPS
-            var targetFps = 1000.0 / 30.0;
-            
-            // We want to tell whether or not we stepped 
-            
-            var stringBuilder = new SeStringBuilder();
-            stringBuilder.AddUiForeground(45);
-            stringBuilder.AddText($"[HighFPSPhysics] ");
-            stringBuilder.AddUiForegroundOff();
-            stringBuilder.AddText("counter: " + _counter);
-            
-            _counter++;
+            ExecutePhysics = false;
 
-            _executePhysics = _counter % 2 == 0;
-            
-            //Chat.Print(stringBuilder.BuiltString);
+            // Disable physics while we're in the "off" or idle ticks.
+            // If the current FPS is lower than the target FPS, this should never run and the physics should always be running.
+            var currentTick = DateTime.Now.Ticks;
+            while (currentTick > EndTick)
+            {
+                startTick = EndTick + 1;
+                RanPhysics = false;
+            }
+
+            if (RanPhysics)
+            {
+                ExecutePhysics = false;
+            }
+            else
+            {
+                RanPhysics = true;
+                ExecutePhysics = true;
+            }
+        }
+
+        /// Our new bone simulator update function.
+        /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
+        private IntPtr BoneUpdate(IntPtr a1, IntPtr a2)
+        {
+            // Update the physics if requested, otherwise don't do anything.
+            return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : frameworkPointer;
         }
 
         public void Dispose()
         {
-            _physicsSkipHook?.Dispose();
-            _framework.Update -= Framework_Update;
+            boneSimulatorUpdateHook?.Dispose();
+            framework.Update -= Update;
         }
     }
 }
