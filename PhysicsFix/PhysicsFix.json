@@ -2,6 +2,6 @@
   "Author": "redstrate",
   "Name": "Physics Fix",
   "Punchline": "Fixes bone physics at higher framerates.",
-  "Description": "Fixes the bone physics at 48hz updates to ensure they work at high framerates.",
+  "Description": "Fixes the bone physics at 60hz updates to ensure they work at high framerates.",
   "ApplicableVersion": "any"
 }

@@ -35,7 +35,7 @@ namespace PhysicsFix
         public bool RanPhysics;
 
         /// The target FPS the physics should be run at
-        private const double TargetFps = 48.0;
+        private const double TargetFps = 60.0;
 
         /// The number of ticks for the length of the target FPS
         private static long SliceLength => (long)(1 / TargetFps * TimeSpan.TicksPerSecond);
