@@ -1,7 +1,15 @@
 {
   "Author": "redstrate",
   "Name": "Physics Fix",
-  "Punchline": "Fixes bone physics at higher framerates.",
-  "Description": "Fixes the bone physics at 60hz updates to ensure they work at high framerates.",
+  "Punchline": "Fixes how bone physics look at higher framerates.",
+  "Description": "Runs bone physics at fixed 60hz intervals to prevent jitter and make them look consistent at higher framerates.\n\nOriginal plugin by Kirrana.",
+  "Tags": [
+    "physics"
+  ],
+  "CategoryTags": [
+    "Other"
+  ],
+  "RepoUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix",
+  "IconUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix/blob/main/images/icon.png",
   "ApplicableVersion": "any"
 }
