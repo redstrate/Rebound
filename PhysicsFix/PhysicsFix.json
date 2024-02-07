@@ -6,10 +6,6 @@
   "Tags": [
     "physics"
   ],
-  "CategoryTags": [
-    "Other"
-  ],
   "RepoUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix",
-  "IconUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix/blob/main/images/icon.png",
-  "ApplicableVersion": "any"
+  "IconUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix/blob/main/images/icon.png"
 }
