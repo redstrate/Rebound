@@ -1,4 +1,4 @@
-# FFXIV Physics Fix
+# Rebound
 
 FFXIV's bone physics consist of wind and bounce physics. These apply to the character's hair, clothes and other body parts. However, some aspects appear broken on high framerates, especially those above 60 FPS. Notably bouncing happens so quickly that it's practically non-existent, and wind effects tend to appear jittery. 
 

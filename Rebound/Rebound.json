@@ -1,11 +1,11 @@
 {
   "Author": "redstrate",
-  "Name": "Physics Fix",
+  "Name": "Rebound",
   "Punchline": "Fixes how bone physics look at higher framerates.",
   "Description": "Runs bone physics at fixed 60hz intervals to prevent jitter and make them look consistent at higher framerates.\n\nOriginal plugin by Kirrana.",
   "Tags": [
     "physics"
   ],
-  "RepoUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix",
-  "IconUrl": "https://git.sr.ht/~redstrate/ffxiv-physics-fix/blob/main/images/icon.png"
+  "RepoUrl": "https://github.com/redstrate/Rebound",
+  "IconUrl": "https://github.com/redstrate/Rebound/blob/main/images/icon.png?raw=true"
 }

@@ -5,7 +5,7 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 
-namespace PhysicsFix
+namespace Rebound
 {
     public sealed class Plugin : IDalamudPlugin
     {
