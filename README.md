@@ -4,6 +4,10 @@ FFXIV's bone physics consist of wind and bounce physics. These apply to the char
 
 This plugin fixes this bug by locking updates to 60 FPS, and is based on [Kirrana's plugin](https://github.com/Kirrana/xivlauncher_physics_plugin/) to be more opinionated with less options.
 
+## Download
+
+This plugin is currently available in [my personal Dalamud repository](https://github.com/redstrate/DalamudPlugins).
+
 ## What FPS was the physics system designed for?
 
 I initially thought the physics was meant to run at 30 FPS, because of PS3/PS4 console performance. However, the "bounce rate" applied to bones is "60.0" (float in BoneSimulator at offset `0x54`) and the physics generally look good at 60 FPS even when the game is running >200 FPS. It also avoids other issues like hair bangs clipping through the head because character positions are updated too infrequently. 
