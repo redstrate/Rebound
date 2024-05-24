@@ -2,8 +2,10 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Hooking;
+using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Physics;
 
 namespace Rebound
 {
@@ -14,7 +16,12 @@ namespace Rebound
 
         [PluginService]
         internal static IGameInteropProvider Hooking { get; private set; } = null!;
-
+        
+        #if DEBUG
+        public readonly WindowSystem WindowSystem = new("Rebound");
+        private DebugWindow DebugWindow { get; init; }
+        #endif
+        
         // g_Client::System::Framework::Framework::InstancePointer2
         // Used as the dummy call when we don't update the bone for a frame
         [Signature("48 8B 05 ?? ?? ?? ?? F3 0F 10 B0 ?? ?? ?? ?? F3 41 0F 5D F2")]
@@ -28,7 +35,12 @@ namespace Rebound
         [Signature("48 8B C4 48 89 48 08 55 48 81 EC", DetourName = nameof(BoneUpdate))]
         private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
-        /// If the physics simulation should be ran 
+        #if DEBUG
+        /// If the fix should be enabled, it's only toggleable here for debug purposes
+        public bool EnableFix = true;
+        #endif
+        
+        /// If the physics simulation should be run 
         public bool ExecutePhysics;
 
         /// If the physics were ran for this slice
@@ -57,11 +69,27 @@ namespace Rebound
 
             boneSimulatorUpdateHook?.Enable();
             framework.Update += Update;
+            
+            #if DEBUG
+            DebugWindow = new DebugWindow(this);
+            WindowSystem.AddWindow(DebugWindow);
+            DebugWindow.IsOpen = true;
+
+            PluginInterface.UiBuilder.Draw += DrawUI;
+            #endif
         }
 
         // Called every frame.
         public void Update(IFramework _)
         {
+            #if DEBUG
+            if (!EnableFix)
+            {
+                ExecutePhysics = true;
+                return;
+            }
+            #endif
+            
             ExecutePhysics = false;
 
             // Disable physics while we're in the "off" or idle ticks.
@@ -96,6 +124,15 @@ namespace Rebound
         {
             boneSimulatorUpdateHook?.Dispose();
             framework.Update -= Update;
+            
+            #if DEBUG
+            WindowSystem.RemoveAllWindows();
+            DebugWindow.Dispose();
+            #endif
         }
+        
+        #if DEBUG
+        private void DrawUI() => WindowSystem.Draw();
+        #endif
     }
 }
