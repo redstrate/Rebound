@@ -7,5 +7,6 @@
     "physics"
   ],
   "RepoUrl": "https://github.com/redstrate/Rebound",
-  "IconUrl": "https://github.com/redstrate/Rebound/blob/main/images/icon.png?raw=true"
+  "IconUrl": "https://github.com/redstrate/Rebound/blob/main/images/icon.png?raw=true", 
+  "DalamudApiLevel": 10
 }
