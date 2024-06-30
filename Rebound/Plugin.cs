@@ -11,11 +11,14 @@ namespace Rebound
 {
     public sealed class Plugin : IDalamudPlugin
     {
-        private readonly IFramework framework;
-        private DalamudPluginInterface PluginInterface { get; init; }
+        [PluginService]
+        internal static IFramework Framework { get; private set; } = null!;
 
         [PluginService]
         internal static IGameInteropProvider Hooking { get; private set; } = null!;
+        
+        [PluginService]
+        internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
         
         #if DEBUG
         public readonly WindowSystem WindowSystem = new("Rebound");
@@ -24,7 +27,7 @@ namespace Rebound
         
         // g_Client::System::Framework::Framework::InstancePointer2
         // Used as the dummy call when we don't update the bone for a frame
-        [Signature("48 8B 05 ?? ?? ?? ?? F3 0F 10 B0 ?? ?? ?? ?? F3 41 0F 5D F2")]
+        // In DT, this seems to be a simple null pointer now
         private readonly IntPtr frameworkPointer = IntPtr.Zero;
 
         /// The detour function signature
@@ -32,7 +35,7 @@ namespace Rebound
 
         // Client::Graphics::Physics::BoneSimulator::Update
         // This is called for each BoneSimulator, such as hair, ears, etc
-        [Signature("48 8B C4 48 89 48 08 55 48 81 EC", DetourName = nameof(BoneUpdate))]
+        [Signature("48 8B C4 48 89 48 08 55 53 5641", DetourName = nameof(BoneUpdate))]
         private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
         #if DEBUG
@@ -57,18 +60,14 @@ namespace Rebound
 
         public long EndTick => startTick + SliceLength;
 
-        public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] IFramework framework)
+        public Plugin()
         {
-            this.framework = framework;
-            this.PluginInterface = pluginInterface;
             Hooking.InitializeFromAttributes(this);
 
             startTick = DateTime.Now.Ticks;
 
             boneSimulatorUpdateHook?.Enable();
-            framework.Update += Update;
+            Framework.Update += Update;
             
             #if DEBUG
             DebugWindow = new DebugWindow(this);
@@ -123,7 +122,7 @@ namespace Rebound
         public void Dispose()
         {
             boneSimulatorUpdateHook?.Dispose();
-            framework.Update -= Update;
+            Framework.Update -= Update;
             
             #if DEBUG
             WindowSystem.RemoveAllWindows();
