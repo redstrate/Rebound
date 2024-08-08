@@ -4,6 +4,10 @@ FFXIV's bone physics consist of wind and bounce physics. These apply to the char
 
 This plugin fixes this bug by locking updates to 60 FPS, and is based on [Kirrana's plugin](https://github.com/Kirrana/xivlauncher_physics_plugin/) to be more opinionated with less options.
 
+### Caveat
+
+This system was never designed to be locked to 60, so clipping **will happen**. If this bothers you (for example, it will easily ruin recordings and certain cutscenes) avoid this plugin. Some bones are always updated at the current frame rate, such as hair bangs to alleviate clipping. 
+
 ## Download
 
 This plugin is currently available in [my personal Dalamud repository](https://github.com/redstrate/DalamudPlugins).

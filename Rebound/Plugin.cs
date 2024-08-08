@@ -31,7 +31,7 @@ namespace Rebound
         private readonly IntPtr frameworkPointer = IntPtr.Zero;
 
         /// The detour function signature
-        private delegate IntPtr BoneSimulatorUpdate(IntPtr a1, IntPtr a2);
+        private unsafe delegate IntPtr BoneSimulatorUpdate(BoneSimulator* a1, IntPtr a2);
 
         // Client::Graphics::Physics::BoneSimulator::Update
         // This is called for each BoneSimulator, such as hair, ears, etc
@@ -113,10 +113,15 @@ namespace Rebound
 
         /// Our new bone simulator update function.
         /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
-        private IntPtr BoneUpdate(IntPtr a1, IntPtr a2)
+        private unsafe IntPtr BoneUpdate(BoneSimulator* a1, IntPtr a2)
         {
-            // Update the physics if requested, otherwise don't do anything.
-            return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : frameworkPointer;
+            // Avoid updating the hair bangs, they tend to show the worst of the clipping.
+            if (a1->Group != BoneSimulator.PhysicsGroup.HairA)
+            {
+                return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : frameworkPointer;
+            }
+
+            return boneSimulatorUpdateHook!.Original(a1, a2);
         }
 
         public void Dispose()
