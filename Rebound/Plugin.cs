@@ -11,16 +11,11 @@ namespace Rebound;
 
 public sealed class Plugin : IDalamudPlugin
 {
-    /// The target FPS the physics should be run at
-    private const double TargetFps = 60.0;
-    
     [Signature(Constants.BoneSimulatorUpdateSignature, DetourName = nameof(BoneUpdate))]
     private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
-    // g_Client::System::Framework::Framework::InstancePointer2
-    // Used as the dummy call when we don't update the bone for a frame
-    // In DT, this seems to be a simple null pointer now
-    private readonly IntPtr frameworkPointer = IntPtr.Zero;
+    [Signature(Constants.BoneSimulatorReturnSignature)]
+    private readonly IntPtr physicsReturn = IntPtr.Zero;
 
 #if DEBUG
     /// If the fix should be enabled, it's only toggleable here for debug purposes
@@ -52,7 +47,7 @@ public sealed class Plugin : IDalamudPlugin
         BoneSimulatorWindow = new BoneSimulatorWindow();
         WindowSystem.AddWindow(BoneSimulatorWindow);
 
-        PluginInterface.UiBuilder.Draw += DrawUI;
+        PluginInterface.UiBuilder.Draw += DrawUi;
 #endif
     }
 
@@ -66,7 +61,7 @@ public sealed class Plugin : IDalamudPlugin
     internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
 
     /// The number of ticks for the length of the target FPS
-    private static long SliceLength => (long)(1 / TargetFps * TimeSpan.TicksPerSecond);
+    private static long SliceLength => (long)(1 / Constants.TargetFps * TimeSpan.TicksPerSecond);
 
     public long EndTick => startTick + SliceLength;
 
@@ -118,16 +113,13 @@ public sealed class Plugin : IDalamudPlugin
     {
         // Avoid updating the hair bangs, they tend to show the worst of the clipping.
         if (a1->Group != BoneSimulator.PhysicsGroup.HairA)
-            return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : frameworkPointer;
+            return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : physicsReturn;
 
         return boneSimulatorUpdateHook!.Original(a1, a2);
     }
 
 #if DEBUG
-    private void DrawUI()
-    {
-        WindowSystem.Draw();
-    }
+    private void DrawUi() => WindowSystem.Draw();
 #endif
 
     /// The detour function signature
