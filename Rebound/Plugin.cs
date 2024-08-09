@@ -13,10 +13,8 @@ public sealed class Plugin : IDalamudPlugin
 {
     /// The target FPS the physics should be run at
     private const double TargetFps = 60.0;
-
-    // Client::Graphics::Physics::BoneSimulator::Update
-    // This is called for each BoneSimulator, such as hair, ears, etc
-    [Signature("48 8B C4 48 89 48 08 55 53 5641", DetourName = nameof(BoneUpdate))]
+    
+    [Signature(Constants.BoneSimulatorUpdateSignature, DetourName = nameof(BoneUpdate))]
     private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
     // g_Client::System::Framework::Framework::InstancePointer2
