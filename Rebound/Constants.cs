@@ -6,11 +6,10 @@ public static class Constants
 {
     /// Client::Graphics::Physics::BoneSimulator::Update
     /// This is called for each BoneSimulator, such as hair, ears, etc
-    public const String BoneSimulatorUpdateSignature = "48 8B C4 48 89 48 08 55 53 56 41 57";
+    public const String BoneSimulatorUpdateSignature = "40 55 53 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 94 24";
 
     /// The return call in Client::Graphics::Physics::BoneSimulator::Update
-    public const String BoneSimulatorReturnSignature =
-        "C3 CC CC CC CC CC CC CC CC CC CC CC CC CC 40 53 55 57 41 54 41 56 48 83 EC 40 4C 89 AC 24 80 00 00 00";
+    public const String BoneSimulatorReturnSignature = "48 8B 8D ?? ?? ?? ?? 48 33 CC E8 ?? ?? ?? ?? 4C 8D 9C 24 ?? ?? ?? ?? 45 0F 28 53";
 
     /// The target FPS the physics should be run at
     public const double TargetFps = 60.0;
