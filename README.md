@@ -23,7 +23,7 @@ The plugin is extremely simple, and basically a pared down version of Kirrana's.
 ## Caveats and lessons learned
 
 * `BoneSimulator::Update` is fundamentally broken. It's also amazing how it's stayed broken for this long. Don't expect to be able to fudge the numbers to make it work without skipping, it's simply impossible.
-  * Surprisingly, the function limits the delta frame rate in numerous ways. I tried fudging the delta frame rate it gets from `Framework`, but it's not possible due to the bone simulator jobs running in parallel with other animation jobs. Basically, you'll end up with statically animated objects like flags running at a different speed tshan everything else.
+  * Surprisingly, the function limits the delta frame rate in numerous ways. I tried fudging the delta frame rate it gets from `Framework`, but it's not possible due to the bone simulator jobs running in parallel with other animation jobs. Basically, you'll end up with statically animated objects like flags running at a different speed than everything else.
 * Clipping is rare but unfortunately unfixable. Due to the character updating at a different speed than the bones, it will happen.
 
 ## Credits
