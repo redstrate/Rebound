@@ -112,7 +112,7 @@ public sealed class Plugin : IDalamudPlugin
     private unsafe IntPtr BoneUpdate(BoneSimulator* a1, IntPtr a2)
     {
         // Avoid updating the hair bangs, they tend to show the worst of the clipping.
-        if (a1->Group != BoneSimulator.PhysicsGroup.HairA)
+        if ((uint)a1->Group != 3)
             return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : physicsReturn;
 
         return boneSimulatorUpdateHook!.Original(a1, a2);

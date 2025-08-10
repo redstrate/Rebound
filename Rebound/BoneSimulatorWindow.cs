@@ -7,7 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Rebound;
 
@@ -78,7 +78,7 @@ public class BoneSimulatorWindow()
         CtrlVec3("Character Position", ref boneSimulator->CharacterPosition);
         CtrlVec3("Gravity", ref boneSimulator->Gravity);
         CtrlVec3("Wind", ref boneSimulator->Wind);
-        CtrlFloat("Spring", ref boneSimulator->Spring);
+        CtrlFloat("SimulationTimeInv", ref boneSimulator->SimulationTimeInv);
     }
 }
 #endif

@@ -2,7 +2,7 @@
 using System;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Rebound;
 
@@ -45,7 +45,7 @@ public class DebugWindow(Plugin plugin)
             timesRan = 0;
         }
 
-        ImGui.PlotLines("##Physics Ticks", ref values[0], (int)fps);
+        ImGui.PlotLines("##Physics Ticks", values, (int)fps);
 
         ImGui.Text($"Max Times Ran: {maxTimesRan}");
 
