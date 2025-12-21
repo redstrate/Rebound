@@ -60,6 +60,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService]
     internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
 
+    [PluginService]
+    internal static IObjectTable ObjectTable { get; private set; } = null!;
+
     /// The number of ticks for the length of the target FPS
     private static long SliceLength => (long)(1 / Constants.TargetFps * TimeSpan.TicksPerSecond);
 

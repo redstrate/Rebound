@@ -26,7 +26,7 @@ public class BoneSimulatorWindow()
 
         unsafe
         {
-            var player = Plugin.ClientState.LocalPlayer;
+            var player = Plugin.ObjectTable.LocalPlayer;
             if (player != null)
             {
                 var model = (CharacterBase*)((GameObject*)player.Address)->DrawObject;
