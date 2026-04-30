@@ -14,9 +14,6 @@ public sealed class Plugin : IDalamudPlugin
     [Signature(Constants.BoneSimulatorUpdateSignature, DetourName = nameof(BoneUpdate))]
     private readonly Hook<BoneSimulatorUpdate>? boneSimulatorUpdateHook = null!;
 
-    [Signature(Constants.BoneSimulatorReturnSignature)]
-    private readonly IntPtr physicsReturn = IntPtr.Zero;
-
 #if DEBUG
     /// If the fix should be enabled, it's only toggleable here for debug purposes
     public bool EnableFix = true;
@@ -90,6 +87,12 @@ public sealed class Plugin : IDalamudPlugin
         }
 #endif
 
+        // Don't apply our "fix" to cutscenes, the delay in updates causes animations to look buggy.
+        if (PluginInterface.UiBuilder.CutsceneActive) {
+            ExecutePhysics = true;
+            return;
+        }
+
         ExecutePhysics = false;
 
         // Disable physics while we're in the "off" or idle ticks.
@@ -112,13 +115,13 @@ public sealed class Plugin : IDalamudPlugin
 
     /// Our new bone simulator update function.
     /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
-    private unsafe IntPtr BoneUpdate(BoneSimulator* a1, IntPtr a2)
+    private unsafe void BoneUpdate(BoneSimulator* a1, BonePhysicsModule *a2)
     {
-        // Avoid updating the hair bangs, they tend to show the worst of the clipping.
-        if ((uint)a1->Group != 3)
-            return ExecutePhysics ? boneSimulatorUpdateHook!.Original(a1, a2) : physicsReturn;
+        if (!ExecutePhysics) {
+            return;
+        }
 
-        return boneSimulatorUpdateHook!.Original(a1, a2);
+        boneSimulatorUpdateHook!.Original(a1, a2);
     }
 
 #if DEBUG
@@ -126,7 +129,7 @@ public sealed class Plugin : IDalamudPlugin
 #endif
 
     /// The detour function signature
-    private unsafe delegate IntPtr BoneSimulatorUpdate(BoneSimulator* a1, IntPtr a2);
+    private unsafe delegate void BoneSimulatorUpdate(BoneSimulator* a1, BonePhysicsModule *a2);
 
 #if DEBUG
     public readonly WindowSystem WindowSystem = new("Rebound");

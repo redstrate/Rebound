@@ -30,17 +30,19 @@ public class BoneSimulatorWindow()
             if (player != null)
             {
                 var model = (CharacterBase*)((GameObject*)player.Address)->DrawObject;
-                var bonePhysicsModule = model->BonePhysicsModule;
-                if (bonePhysicsModule != null)
-                {
-                    FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_1);
-                    FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_2);
-                    FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_3);
-                    FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_4);
-                    FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_5);
+                if (model != null) {
+                    var bonePhysicsModule = model->BonePhysicsModule;
+                    if (bonePhysicsModule != null)
+                    {
+                        FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_1);
+                        FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_2);
+                        FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_3);
+                        FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_4);
+                        FillBoneSimulators(bonePhysicsModule->BoneSimulators.BoneSimulator_5);
+                    }
+                    else
+                        ImGui.Text("Player found, but no BonePhysicsModule.");
                 }
-                else
-                    ImGui.Text("Player found, but no BonePhysicsModule.");
             }
             else
                 ImGui.Text("Player not found.");
