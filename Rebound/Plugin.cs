@@ -96,12 +96,13 @@ public sealed class Plugin : IDalamudPlugin
         boneSimulatorUpdateHook!.Original(self, data);
     }
 
-    private unsafe void TaskHook(void* a1, void* a2)
+    private unsafe void TaskHook(Framework* self, void* a2)
     {
 #if DEBUG
         if (!EnableFix)
         {
-            taskHook!.Original(a1, a2);
+            ExecutePhysics = true;
+            taskHook!.Original(self, a2);
             return;
         }
 #endif
@@ -109,7 +110,8 @@ public sealed class Plugin : IDalamudPlugin
         // Don't apply our "fix" to cutscenes, the delay in updates causes animations to look buggy.
         if (PluginInterface.UiBuilder.CutsceneActive)
         {
-            taskHook!.Original(a1, a2);
+            ExecutePhysics = true;
+            taskHook!.Original(self, a2);
             return;
         }
 
@@ -132,11 +134,14 @@ public sealed class Plugin : IDalamudPlugin
             ExecutePhysics = true;
         }
 
-        taskHook!.Original(a1, a2);
+        var oldDeltaTime = self->FrameDeltaTime;
+        self->FrameDeltaTime = 1.0f / (float)TargetFps; // Unsure if this helps at all, but just in case.
+        taskHook!.Original(self, a2);
+        self->FrameDeltaTime = oldDeltaTime;
     }
 
     /// The detour function signature
-    private unsafe delegate void TaskHookDelegate(void* a1, void* a2);
+    private unsafe delegate void TaskHookDelegate(Framework* self, void* a2);
 
 #if DEBUG
     private void DrawUi() => WindowSystem.Draw();
