@@ -30,7 +30,8 @@ public class BoneSimulatorWindow()
             if (player != null)
             {
                 var model = (CharacterBase*)((GameObject*)player.Address)->DrawObject;
-                if (model != null) {
+                if (model != null)
+                {
                     var bonePhysicsModule = model->BonePhysicsModule;
                     if (bonePhysicsModule != null)
                     {
