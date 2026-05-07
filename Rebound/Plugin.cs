@@ -4,14 +4,19 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Physics;
 using static FFXIVClientStructs.FFXIV.Client.Graphics.Physics.BonePhysicsUpdater;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace Rebound;
 
 public sealed class Plugin : IDalamudPlugin
 {
     private readonly Hook<BonePhysicsUpdater.Delegates.BoneSimulatorTask>? boneSimulatorUpdateHook = null!;
+
+    [Signature("F3 0F 10 89 ?? ?? ?? ?? 4C 8B C2", DetourName = nameof(TaskHook))]
+    private readonly Hook<TaskHookDelegate>? taskHook = null!;
 
 #if DEBUG
     /// If the fix should be enabled, it's only toggleable here for debug purposes
@@ -38,7 +43,7 @@ public sealed class Plugin : IDalamudPlugin
         startTick = DateTime.Now.Ticks;
 
         boneSimulatorUpdateHook?.Enable();
-        Framework.Update += Update;
+        taskHook?.Enable();
 
 #if DEBUG
         DebugWindow = new DebugWindow(this);
@@ -50,9 +55,6 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw += DrawUi;
 #endif
     }
-
-    [PluginService]
-    internal static IFramework Framework { get; private set; } = null!;
 
     [PluginService]
     internal static IGameInteropProvider Hooking { get; private set; } = null!;
@@ -74,7 +76,7 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         boneSimulatorUpdateHook?.Dispose();
-        Framework.Update -= Update;
+        taskHook?.Dispose();
 
 #if DEBUG
         WindowSystem.RemoveAllWindows();
@@ -82,13 +84,24 @@ public sealed class Plugin : IDalamudPlugin
 #endif
     }
 
-    // Called every frame.
-    public void Update(IFramework _)
+    /// Our new bone simulator update function.
+    /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
+    private unsafe void BoneUpdate(BonePhysicsUpdater* self, UpdateBoneSimulatorJobData* data)
+    {
+        if (!ExecutePhysics)
+        {
+            return;
+        }
+
+        boneSimulatorUpdateHook!.Original(self, data);
+    }
+
+    private unsafe void TaskHook(void* a1, void* a2)
     {
 #if DEBUG
         if (!EnableFix)
         {
-            ExecutePhysics = true;
+            taskHook!.Original(a1, a2);
             return;
         }
 #endif
@@ -96,7 +109,7 @@ public sealed class Plugin : IDalamudPlugin
         // Don't apply our "fix" to cutscenes, the delay in updates causes animations to look buggy.
         if (PluginInterface.UiBuilder.CutsceneActive)
         {
-            ExecutePhysics = true;
+            taskHook!.Original(a1, a2);
             return;
         }
 
@@ -118,19 +131,12 @@ public sealed class Plugin : IDalamudPlugin
             RanPhysics = true;
             ExecutePhysics = true;
         }
+
+        taskHook!.Original(a1, a2);
     }
 
-    /// Our new bone simulator update function.
-    /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
-    private unsafe void BoneUpdate(BonePhysicsUpdater* self, UpdateBoneSimulatorJobData* data)
-    {
-        if (!ExecutePhysics)
-        {
-            return;
-        }
-
-        boneSimulatorUpdateHook!.Original(self, data);
-    }
+    /// The detour function signature
+    private unsafe delegate void TaskHookDelegate(void* a1, void* a2);
 
 #if DEBUG
     private void DrawUi() => WindowSystem.Draw();
