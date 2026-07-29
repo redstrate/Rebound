@@ -2,7 +2,7 @@
 
 FFXIV's physics applied to character's hair, clothes and other body parts appear broken on high framerates above 60 FPS.
 
-All this plugins does is enable a hidden flag in the client that enables simulation at higher framerates. It's currently unknown why this is still disabled.
+All this plugins does is enable an unused flag in the client that fixes simulation at higher framerates. It's currently unknown why this is still disabled.
 
 ## License
 

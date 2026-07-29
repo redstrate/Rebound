@@ -2,7 +2,7 @@
     "Author": "redstrate",
     "Name": "Rebound",
     "Punchline": "Fixes how bone physics look at higher framerates.",
-    "Description": "Runs bone physics at fixed 60hz intervals to prevent jitter and make them look consistent at higher framerates.",
+    "Description": "Enables an unused flag in the client that fixes bone physics at high framerates.",
     "Tags": [
         "physics"
     ],
