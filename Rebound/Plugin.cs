@@ -1,146 +1,35 @@
-using System;
-using Dalamud.Hooking;
-using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Physics;
-using static FFXIVClientStructs.FFXIV.Client.Graphics.Physics.BonePhysicsUpdater;
+using Dalamud.Utility.Signatures;
 
 namespace Rebound;
 
 public sealed class Plugin : IDalamudPlugin
 {
-    private readonly Hook<BonePhysicsUpdater.Delegates.BoneSimulatorTask>? boneSimulatorUpdateHook = null!;
-
-#if DEBUG
-    /// If the fix should be enabled, it's only toggleable here for debug purposes
-    public bool EnableFix = true;
-#endif
-
-    /// If the physics simulation should be run
-    public bool ExecutePhysics;
-
-    /// If the physics were ran for this slice
-    public bool RanPhysics;
-
-    /// Timekeeping state
-    private long startTick;
+    /// When true, checks if we're about ~10 FPS over 60 and enables UseOverrideSimulationTime on BonePhysicsModules.
+    /// If you need to find the signature for this again, start in Client::Graphics::Scene::CharacterBase.UpdateRender.
+    [Signature("38 1D ?? ?? ?? ?? F3 0F 10 3D", ScanType = ScanType.StaticAddress)]
+    public unsafe bool* _useOverrideSimulationTime = null;
 
     public Plugin()
     {
         Hooking.InitializeFromAttributes(this);
+
         unsafe
         {
-            boneSimulatorUpdateHook = Plugin.Hooking.HookFromAddress<BonePhysicsUpdater.Delegates.BoneSimulatorTask>((nint)BonePhysicsUpdater.MemberFunctionPointers.BoneSimulatorTask, BoneUpdate);
+            *_useOverrideSimulationTime = true;
         }
-
-        startTick = DateTime.Now.Ticks;
-
-        boneSimulatorUpdateHook?.Enable();
-        Framework.Update += Update;
-
-#if DEBUG
-        DebugWindow = new DebugWindow(this);
-        WindowSystem.AddWindow(DebugWindow);
-        DebugWindow.IsOpen = true;
-        BoneSimulatorWindow = new BoneSimulatorWindow();
-        WindowSystem.AddWindow(BoneSimulatorWindow);
-
-        PluginInterface.UiBuilder.Draw += DrawUi;
-#endif
     }
-
-    [PluginService]
-    internal static IFramework Framework { get; private set; } = null!;
 
     [PluginService]
     internal static IGameInteropProvider Hooking { get; private set; } = null!;
 
-    [PluginService]
-    internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-
-    [PluginService]
-    internal static IObjectTable ObjectTable { get; private set; } = null!;
-
-    /// The target FPS the physics should be run at
-    public const double TargetFps = 60.0;
-
-    /// The number of ticks for the length of the target FPS
-    private static long SliceLength => (long)(1 / TargetFps * TimeSpan.TicksPerSecond);
-
-    public long EndTick => startTick + SliceLength;
-
     public void Dispose()
     {
-        boneSimulatorUpdateHook?.Dispose();
-        Framework.Update -= Update;
-
-#if DEBUG
-        WindowSystem.RemoveAllWindows();
-        DebugWindow.Dispose();
-#endif
-    }
-
-    // Called every frame.
-    public void Update(IFramework _)
-    {
-#if DEBUG
-        if (!EnableFix)
+        unsafe
         {
-            ExecutePhysics = true;
-            return;
-        }
-#endif
-
-        // Don't apply our "fix" to cutscenes, the delay in updates causes animations to look buggy.
-        if (PluginInterface.UiBuilder.CutsceneActive)
-        {
-            ExecutePhysics = true;
-            return;
-        }
-
-        ExecutePhysics = false;
-
-        // Disable physics while we're in the "off" or idle ticks.
-        // If the current FPS is lower than the target FPS, this should never run and the physics should always be running.
-        var currentTick = DateTime.Now.Ticks;
-        while (currentTick > EndTick)
-        {
-            startTick = EndTick + 1;
-            RanPhysics = false;
-        }
-
-        if (RanPhysics)
-            ExecutePhysics = false;
-        else
-        {
-            RanPhysics = true;
-            ExecutePhysics = true;
+            *_useOverrideSimulationTime = false;
         }
     }
-
-    /// Our new bone simulator update function.
-    /// Called for each BoneSimulator, so possibly multiple times every frame. Should be kept very simple for performance reasons.
-    private unsafe void BoneUpdate(BonePhysicsUpdater* self, UpdateBoneSimulatorJobData* data)
-    {
-        if (!ExecutePhysics)
-        {
-            return;
-        }
-
-        boneSimulatorUpdateHook!.Original(self, data);
-    }
-
-#if DEBUG
-    private void DrawUi() => WindowSystem.Draw();
-#endif
-
-#if DEBUG
-    public readonly WindowSystem WindowSystem = new("Rebound");
-    private DebugWindow DebugWindow { get; init; }
-    public BoneSimulatorWindow BoneSimulatorWindow { get; init; }
-    [PluginService]
-    public static IClientState ClientState { get; private set; } = null!;
-#endif
 }
